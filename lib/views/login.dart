@@ -1,6 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kgx_attendance/api/ApiService.dart';
-import 'package:kgx_attendance/views/qrscanner.dart';
+import 'package:kgx_attendance/api/attendanceapi.dart';
+import 'package:kgx_attendance/views/qrbuttons.dart';
+
+import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'dart:developer';
+import 'dart:io';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -12,21 +18,45 @@ class LoginPage extends StatefulWidget {
 class _LoginState extends State<LoginPage> {
   final emailText = TextEditingController();
   final passwordText = TextEditingController();
+  var token;
   callLoginApi() {
     final service = ApiServices();
 
     service.apiCallLogin(
       {
-        "email": emailText.text,
+        "username": emailText.text,
         "password": passwordText.text,
       },
     ).then((value) {
       if (value.error != null) {
         print("get data >>>>>> " + value.error!);
+        const snackBar = SnackBar(
+          content: Text(
+            'Enter valid credentials',
+            style: TextStyle(fontFamily: 'SpecialElite'),
+          ),
+          backgroundColor: Colors.blueAccent,
+          elevation: 10,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(5),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
       } else {
-        print(value.token);
+        token = value.access_token;
+        print(token);
         Navigator.push(
-            context, MaterialPageRoute(builder: (context) => QrScanner()));
+            context, MaterialPageRoute(builder: ((context) => QrButtons())));
+        const snackBar = SnackBar(
+          content: Text(
+            'Login Successful!',
+            style: TextStyle(fontFamily: 'SpecialElite'),
+          ),
+          backgroundColor: Colors.blueAccent,
+          elevation: 10,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(5),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
     });
   }
@@ -55,7 +85,7 @@ class _LoginState extends State<LoginPage> {
             Container(
               padding: const EdgeInsets.all(2),
               child: const Text(
-                'KGXAttendance',
+                'KGX Attendance',
                 style: TextStyle(fontSize: 20, fontFamily: 'Alata-Regular'),
               ),
             ),
@@ -98,33 +128,18 @@ class _LoginState extends State<LoginPage> {
                     style: TextStyle(fontFamily: 'Alata-Regular'),
                   ),
                   onPressed: () {
-                    if (emailText.text == '' || passwordText.text == '') {
-                      const snackBar = SnackBar(
-                        content: Text(
-                          'Enter the credentials',
-                          style: TextStyle(fontFamily: 'SpecialElite'),
-                        ),
-                        backgroundColor: Colors.blueAccent,
-                        elevation: 10,
-                        behavior: SnackBarBehavior.floating,
-                        margin: EdgeInsets.all(5),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                    } else {
-                      callLoginApi();
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: ((context) => const QrScanner())));
-                      const snackBar = SnackBar(
-                        content: Text('Logging in...'),
-                        backgroundColor: Colors.blueAccent,
-                        elevation: 10,
-                        behavior: SnackBarBehavior.floating,
-                        margin: EdgeInsets.all(10),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                    }
+                    callLoginApi();
+
+                    const snackbar = SnackBar(
+                      content: Text(
+                        'Please wait while logging in...',
+                        style: TextStyle(fontFamily: 'SpecialElite'),
+                      ),
+                      backgroundColor: Colors.blue,
+                      elevation: 10,
+                      behavior: SnackBarBehavior.floating,
+                      margin: EdgeInsets.all(5),
+                    );
                   },
                 )),
           ],
